@@ -1,0 +1,10 @@
+mss==7.0.1          # Extremely fast screen capture
+pytesseract==0.3.10 # OCR engine wrapper
+opencv-python==4.8.1.78 # Image processing to improve OCR accuracy
+customtkinter==5.2.0# Modern, dark-mode friendly UI for the overlay
+Pillow>=10.1.0      # Image manipulation
+pywin32>=306        # Windows API for dynamic window tracking
+
+Pillow>=10.1.0      # Image manipulation
+pywin32>=306        # Windows API for dynamic window tracking
+customtkinter==5.2.0# Modern, dark-mode friendly UI for the overlay

@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.vscode/
+.idea/
+build/
+dist/
+data_test_tmp/
+MapleEXPTracker.spec
+data/exp_log.csv
+data/exp_log.json
+data/config.json
