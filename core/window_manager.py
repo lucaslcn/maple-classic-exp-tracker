@@ -35,6 +35,27 @@ class WindowManager:
 
     DEFAULT_TITLES = ["maplestory", "maple", "classic world"]
     DEFAULT_PROCESSES = ["maplestory.exe"]
+    EXCLUDED_CLASSES = {
+        "chrome_widgetwin_1",
+        "chrome_widgetwin_0",
+        "mozillawindowclass",
+        "applicationframewindow",
+        "cabinetwclass",
+        "tktoplevel",
+    }
+    EXCLUDED_KEYWORDS = (
+        "tracker",
+        "preview",
+        "discord",
+        "chrome",
+        "microsoft edge",
+        "firefox",
+        "brave",
+        "opera",
+        "visual studio",
+        "github",
+        "youtube",
+    )
 
     def __init__(self, target_titles: Optional[List[str]] = None, target_processes: Optional[List[str]] = None):
         ensure_desktop_access()
@@ -44,13 +65,12 @@ class WindowManager:
         self.last_title: str = ""
 
     def find_window(self) -> Optional[int]:
-        """Scan active desktop windows for MapleStory client."""
+        """Scan active desktop windows for MapleStory client, prioritizing MapleStoryClass and exact title matches."""
         ensure_desktop_access()
-        found_hwnd = None
-        found_title = ""
+        best_candidate = None  # (priority_score, hwnd, title)
 
         def enum_cb(hwnd, _):
-            nonlocal found_hwnd, found_title
+            nonlocal best_candidate
             if not win32gui.IsWindowVisible(hwnd) or win32gui.IsIconic(hwnd):
                 return
 
@@ -65,26 +85,36 @@ class WindowManager:
                 return
 
             title_lower = title.lower()
-            # Never match our own tracker or preview windows
-            if "tracker" in title_lower or "preview" in title_lower:
+            if any(kw in title_lower for kw in self.EXCLUDED_KEYWORDS):
                 return
 
-            # Match title
-            if any(t in title_lower for t in self.target_titles):
-                found_hwnd = hwnd
-                found_title = title
-                return
-
-            # Check process name if title doesn't directly mention it
             try:
-                _, pid = win32process.GetWindowThreadProcessId(hwnd)
-                # Check with toolhelp or kernel if needed
+                cls_name = win32gui.GetClassName(hwnd).strip().lower()
             except Exception:
-                pass
+                cls_name = ""
+
+            if cls_name in self.EXCLUDED_CLASSES:
+                return
+
+            score = 0
+            # Priority 1: Native MapleStory window class
+            if cls_name == "maplestoryclass":
+                score = 100
+            # Priority 2: Exact window title "MapleStory" or "MapleStory Classic World"
+            elif title_lower in ("maplestory", "maplestory classic world"):
+                score = 90
+            # Priority 3: Substring match on target titles (for custom/test windows)
+            elif any(t in title_lower for t in self.target_titles):
+                score = 50
+
+            if score > 0:
+                if best_candidate is None or score > best_candidate[0]:
+                    best_candidate = (score, hwnd, title)
 
         win32gui.EnumWindows(enum_cb, None)
 
-        if found_hwnd:
+        if best_candidate is not None:
+            _, found_hwnd, found_title = best_candidate
             self.hwnd = found_hwnd
             self.last_title = found_title
             return found_hwnd

@@ -127,7 +127,7 @@ class MapMatcher:
         best = None
         second_dist = 999
         for e in self.entries:
-            if e[3] != nums or abs(len(e[1]) - len(key)) > 2:
+            if e[3] != nums or abs(len(e[1]) - len(key)) > 3:
                 continue
             d = _edit_distance(key, e[1])
             if best is None or d < best[0]:
@@ -136,7 +136,7 @@ class MapMatcher:
             elif d < second_dist:
                 second_dist = d
 
-        allowed = 2 if len(key) >= 14 else 1
+        allowed = 3 if len(key) >= 12 else (2 if len(key) >= 8 else 1)
         if best and best[0] <= allowed and (second_dist - best[0] >= 1):
             return best[1][0], best[1][2]
 
